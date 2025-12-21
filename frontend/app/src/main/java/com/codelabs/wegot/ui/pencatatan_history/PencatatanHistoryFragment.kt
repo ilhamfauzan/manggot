@@ -235,9 +235,10 @@ class PencatatanHistoryFragment : Fragment() {
 
         binding.lineChartView.apply {
             gradientFillColors = intArrayOf(
-                resources.getColor(android.R.color.transparent),
-                resources.getColor(android.R.color.transparent)
+                resources.getColor(R.color.green, null),
+                resources.getColor(android.R.color.transparent, null)
             )
+            lineColor = resources.getColor(R.color.green, null)
             animate(wasteData)
         }
     }

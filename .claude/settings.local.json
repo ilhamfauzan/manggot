@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"console.log\\(require\\(''crypto''\\).randomBytes\\(64\\).toString\\(''hex''\\)\\)\")",
+      "Bash(PGPASSWORD=TRvdOrRZu29qAzYJNBfSD87fBl48Cb9q psql -h dpg-d546edchg0os7399qtug-a.oregon-postgres.render.com -U maggot_production_user maggot_production -c \"\n-- Insert dummy users \\(password is bcrypt hash of ''password123''\\)\nINSERT INTO \"\"User\"\" \\(username, password, rw, \"\"createdAt\"\"\\) VALUES \n\\(''admin_rw4'', ''$2b$10$rQZ5z8mQVzV8mQVzV8mQVe8mQVzV8mQVzV8mQVzV8mQVzV8mQVzV'', ''RW4'', NOW\\(\\)\\),\n\\(''admin_rw5'', ''$2b$10$rQZ5z8mQVzV8mQVzV8mQVe8mQVzV8mQVzV8mQVzV8mQVzV8mQVzV'', ''RW5'', NOW\\(\\)\\),\n\\(''user1_rw4'', ''$2b$10$rQZ5z8mQVzV8mQVzV8mQVe8mQVzV8mQVzV8mQVzV8mQVzV8mQVzV'', ''RW4'', NOW\\(\\)\\),\n\\(''user2_rw5'', ''$2b$10$rQZ5z8mQVzV8mQVzV8mQVe8mQVzV8mQVzV8mQVzV8mQVzV8mQVzV'', ''RW5'', NOW\\(\\)\\),\n\\(''user3_rw4'', ''$2b$10$rQZ5z8mQVzV8mQVzV8mQVe8mQVzV8mQVzV8mQVzV8mQVzV8mQVzV'', ''RW4'', NOW\\(\\)\\)\nON CONFLICT \\(username\\) DO NOTHING\nRETURNING id, username, rw;\n\")",
+      "Bash(node prisma/seed-dummy.mjs)"
+    ]
+  }
+}

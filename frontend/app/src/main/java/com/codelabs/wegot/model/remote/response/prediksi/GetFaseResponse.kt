@@ -7,26 +7,26 @@ data class GetFaseResponse(
 
 data class DataGetFase(
 	val createdAt: String,
-	val keterangan: String,
+	val keterangan: String?,
 	val siklusId: Int,
 	val jenis: String,
-	val prediksiPanen: Any,
+	val prediksiPanen: Any?,
 	val id: Int,
 	val tanggal: String,
-	val jumlahMakanan: Int,
-	val jumlahTelur: Any
+	val jumlahMakanan: Double?,
+	val jumlahTelur: Int?
 )
 
 data class PrediksiPanen(
 	val createdAt: String,
-	val estimatedValue: Int,
-	val feedCost: Int,
+	val estimatedValue: Double,
+	val feedCost: Double,
 	val faseId: Int,
-	val hasilGram: Any,
+	val hasilGram: Double,
 	val id: Int,
-	val hasilKg: Any,
-	val conversionRate: Any,
+	val hasilKg: Double,
+	val conversionRate: Double,
 	val conversionLabel: String,
-	val roiEstimate: Any
+	val roiEstimate: Double
 )
 

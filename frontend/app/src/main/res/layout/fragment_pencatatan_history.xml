@@ -72,6 +72,8 @@
         app:chart_axis="xy"
         app:chart_labelsColor="@color/black"
         app:chart_labelsSize="12sp"
+        app:chart_lineColor="@color/green"
+        app:chart_smoothLine="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvCek" />

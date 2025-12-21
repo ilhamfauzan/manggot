@@ -70,7 +70,7 @@ class DetailSiklusAdapter(
                 val faseData = item.data!!
                 binding.tvTitle.text = faseData.jenis
                 binding.tvDate.text = formatDate(faseData.tanggal)
-                binding.tvDesc.text = faseData.keterangan
+                binding.tvDesc.text = faseData.keterangan ?: "-"
                 binding.tvDesc.setTextColor(binding.root.context.getColor(android.R.color.black))
 
                 when (faseData.jenis.uppercase()) {
