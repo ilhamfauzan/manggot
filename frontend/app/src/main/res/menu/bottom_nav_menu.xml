@@ -7,6 +7,11 @@
         android:title="@string/title_pencatatan_history" />
 
     <item
+        android:id="@+id/navigation_dashboard"
+        android:icon="@drawable/ic_chart"
+        android:title="Dashboard" />
+
+    <item
         android:id="@+id/navitgation_chatbot"
         android:icon="@drawable/ic_chatbot"
         android:title="@string/title_chatbot" />

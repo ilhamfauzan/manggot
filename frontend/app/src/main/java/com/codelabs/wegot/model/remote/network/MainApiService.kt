@@ -30,6 +30,7 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface MainApiService {
 
@@ -101,5 +102,9 @@ interface MainApiService {
         @Path("id") id: Int
     ): MarkAsReadResponse
 
+    @GET("api/dashboard/summary")
+    suspend fun getDashboardSummary(
+        @Query("timeRange") timeRange: String = "all"
+    ): com.codelabs.wegot.model.remote.response.dashboard.DashboardResponse
 
 }

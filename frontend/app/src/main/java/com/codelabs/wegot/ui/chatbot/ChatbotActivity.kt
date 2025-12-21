@@ -18,7 +18,9 @@ import com.codelabs.wegot.model.local.data.Author
 import com.codelabs.wegot.model.local.data.Chat
 import com.codelabs.wegot.model.remote.body.ChatBody
 import com.codelabs.wegot.model.remote.network.ApiConfig
+import com.codelabs.wegot.model.remote.network.ChatbotApiService
 import com.codelabs.wegot.ui.adapter.ChatAdapter
+import javax.inject.Inject
 import com.google.android.material.appbar.MaterialToolbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,9 @@ import kotlin.toString
 
 @AndroidEntryPoint
 class ChatbotActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var chatbotApiService: ChatbotApiService
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var adapter: ChatAdapter
@@ -105,10 +110,9 @@ class ChatbotActivity : AppCompatActivity() {
             rvChat.scrollToPosition(chatHistory.size - 1)
 
             lifecycleScope.launch {
-                val service = ApiConfig.getChatbotApiService()
                 val response = runCatching {
                     withContext(Dispatchers.IO) {
-                        service.getChatResponse(ChatBody(question = text))
+                        chatbotApiService.getChatResponse(ChatBody(question = text))
                     }
                 }
 

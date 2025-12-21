@@ -1,5 +1,6 @@
 package com.codelabs.wegot.ui.prediksi.detail_siklus
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -23,6 +24,19 @@ class DetailSiklusViewModel @Inject constructor(
         viewModelScope.launch {
             _faseData.value = ApiResponse.Empty
             val result = repository.getFase(siklusId)
+            
+            // ✅ DEBUG: Log response
+            if (result is ApiResponse.Success) {
+                Log.d("DetailSiklusVM", "=== GET FASE SUCCESS ===")
+                result.data.data.forEach { fase ->
+                    Log.d("DetailSiklusVM", "Fase: ${fase.jenis}, ID: ${fase.id}")
+                    Log.d("DetailSiklusVM", "  prediksiPanen: ${fase.prediksiPanen}")
+                    Log.d("DetailSiklusVM", "  prediksiPanen null? ${fase.prediksiPanen == null}")
+                }
+            } else if (result is ApiResponse.Error) {
+                Log.e("DetailSiklusVM", "❌ GET FASE ERROR: ${result.errorMessage}")
+            }
+            
             _faseData.value = result
         }
     }

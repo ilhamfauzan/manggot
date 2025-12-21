@@ -153,20 +153,22 @@ class PrediksiRepository @Inject constructor(
         siklusId: Int,
         jenis: String,
         tanggal: String,
-        jumlahHasil: Int, // hasil panen
+        jumlahTelur: Int,      // ✅ FIX: Jumlah telur asli
+        jumlahMakanan: Int,    // ✅ FIX: Tambah parameter jumlahMakanan
         catatan: String
     ): ApiResponse<AddFaseResponse> {
         return try {
-            val faseRequest = AddFaseRequest(
+            // ✅ FIX: Gunakan AddFasePembesaranRequest yang punya jumlahMakanan
+            val faseRequest = AddFasePembesaranRequest(
                 jenis = jenis,
                 tanggal = tanggal,
-                jumlahTelur = jumlahHasil,
-                mediaTelur = "",
+                jumlahMakanan = jumlahMakanan,  // ✅ Kirim jumlahMakanan
                 catatan = catatan
             )
 
-            val response = remoteDataSource.addFase(siklusId, faseRequest)
+            val response = remoteDataSource.addFasePembesaran(siklusId, faseRequest)
             Log.d("PrediksiRepository", "Add Fase Panen Response: $response")
+            Log.d("PrediksiRepository", "Sent: jumlahTelur=$jumlahTelur, jumlahMakanan=$jumlahMakanan")
 
             if (response.success) {
                 ApiResponse.Success(response)

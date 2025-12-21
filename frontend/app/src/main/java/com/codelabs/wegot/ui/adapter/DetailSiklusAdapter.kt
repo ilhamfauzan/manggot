@@ -17,6 +17,8 @@ class DetailSiklusAdapter(
 
     private val faseList = mutableListOf<DataGetFase>()
 
+    fun getFaseList(): List<DataGetFase> = faseList
+
     data class FaseItem(
         val data: DataGetFase? = null,
         val jeniFase: String,

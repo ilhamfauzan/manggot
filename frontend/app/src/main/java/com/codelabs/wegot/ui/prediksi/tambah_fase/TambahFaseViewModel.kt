@@ -39,7 +39,8 @@ class TambahFaseViewModel @Inject constructor(
         siklusId: Int,
         tanggalPembesaran: String,
         jumlahMakanan: Int,
-        catatan: String
+        catatan: String,
+        jumlahTelur: Int = 100  // Default jika tidak tersedia
     ) {
         viewModelScope.launch {
             _addFaseResult.value = ApiResponse.Empty
@@ -59,7 +60,8 @@ class TambahFaseViewModel @Inject constructor(
                             siklusId = siklusId,
                             jenis = "PANEN",
                             tanggal = tanggalPembesaran,
-                            jumlahHasil = 0,
+                            jumlahTelur = jumlahTelur,     // ✅ FIX: Pass jumlahTelur
+                            jumlahMakanan = jumlahMakanan,  // ✅ FIX: Pass jumlahMakanan
                             catatan = "Fase panen otomatis"
                         )
                     } catch (e: Exception) {

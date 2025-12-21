@@ -13,6 +13,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.App.Starting">
         <activity
             android:name=".ui.pencatatan_history.detail_pencatatan_history.HistoryDetailActivity"
@@ -56,6 +57,10 @@
             android:theme="@style/Theme.WeGot" />
         <activity
             android:name=".ui.notifications.NotificationsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WeGot" />
+        <activity
+            android:name=".ui.dashboard.DashboardActivity"
             android:exported="false"
             android:theme="@style/Theme.WeGot" />
         <activity

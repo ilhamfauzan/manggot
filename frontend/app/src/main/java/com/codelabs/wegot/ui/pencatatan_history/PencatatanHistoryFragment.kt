@@ -72,22 +72,55 @@ class PencatatanHistoryFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.historyData.observe(viewLifecycleOwner) { response ->
-            historyAdapter.setItems(response.data)
-            setupLineChart(response.data.map {
-                DataItem(
-                    tanggalWaktu = it.tanggalWaktu,
-                    totalSampah = it.totalSampah
-                )
-            })
+            if (response.data.isEmpty()) {
+                showEmptyState(true)
+            } else {
+                binding.rvPrediksiSiklus.visibility = View.VISIBLE
+                binding.layoutEmptyState.root.visibility = View.GONE
 
+                historyAdapter.setItems(response.data)
+                setupLineChart(response.data.map {
+                    DataItem(
+                        tanggalWaktu = it.tanggalWaktu,
+                        totalSampah = it.totalSampah
+                    )
+                })
+            }
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { error ->
             Toast.makeText(requireContext(), "Error: $error", Toast.LENGTH_SHORT).show()
+            showEmptyState(true, isError = true)
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             // Tambahkan loading indicator jika diperlukan
+        }
+    }
+
+    private fun showEmptyState(isEmpty: Boolean, isError: Boolean = false) {
+        if (isEmpty) {
+            binding.rvPrediksiSiklus.visibility = View.GONE
+            binding.layoutEmptyState.root.visibility = View.VISIBLE
+
+            if (isError) {
+                binding.layoutEmptyState.tvEmptyTitle.text = "Gagal Memuat Data"
+                binding.layoutEmptyState.tvEmptyMessage.text = "Terjadi kesalahan saat memuat data."
+                binding.layoutEmptyState.btnEmptyAction.text = "Coba Lagi"
+                binding.layoutEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                binding.layoutEmptyState.btnEmptyAction.setOnClickListener {
+                    viewModel.getHistoryPencacahan()
+                }
+            } else {
+                binding.layoutEmptyState.tvEmptyTitle.text = "Belum Ada Riwayat"
+                binding.layoutEmptyState.tvEmptyMessage.text = "Riwayat pencacahan sampah akan muncul di sini."
+                binding.layoutEmptyState.btnEmptyAction.text = "Tambah Riwayat"
+                binding.layoutEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                binding.layoutEmptyState.btnEmptyAction.setOnClickListener {
+                    val intent = Intent(requireContext(), TambahRiwayatActivity::class.java)
+                    addHistoryLauncher.launch(intent)
+                }
+            }
         }
     }
 

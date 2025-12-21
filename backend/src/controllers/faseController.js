@@ -40,42 +40,97 @@ export const tambahFase = async (req, res) => {
       return res.json({ success: true, data: fase });
     }
 
-    // Validasi panen
-    if (!jumlahTelur || !jumlahMakanan) {
-      return res.status(400).json({ message: "Data panen tidak lengkap" });
+    // === LOGIC PREDIKSI PANEN ===
+    console.log(`📊 Fase PANEN created, generating prediction...`);
+
+    // ✅ FIX: Ambil jumlahTelur dari siklus
+    const jumlahTelurSiklus = siklus.jumlahTelur;
+    
+    // ✅ FIX: Ambil jumlahMakanan dari fase PEMBESARAN
+    const fasePembesaran = await prisma.fase.findFirst({
+      where: { 
+        siklusId,
+        jenis: "PEMBESARAN"
+      },
+      orderBy: { createdAt: 'desc' }  // Ambil yang terbaru
+    });
+
+    if (!fasePembesaran || !fasePembesaran.jumlahMakanan) {
+      console.error("❌ Fase PEMBESARAN not found or no jumlahMakanan");
+      return res.status(400).json({ 
+        success: false,
+        message: "Fase PEMBESARAN harus ada terlebih dahulu dengan data jumlah makanan" 
+      });
     }
 
-    // Request ML
-    const ml = await axios.post(process.env.ML_API_URL, {
-      jumlah_telur_gram: Number(jumlahTelur),
-      makanan_gram: Number(jumlahMakanan)
-    });
+    const jumlahMakananPembesaran = fasePembesaran.jumlahMakanan;
+    
+    console.log(`✅ Data untuk ML:`);
+    console.log(`   jumlahTelur: ${jumlahTelurSiklus}g (dari siklus)`);
+    console.log(`   jumlahMakanan: ${jumlahMakananPembesaran}g (dari fase PEMBESARAN)`);
 
-    const prediction = ml.data.prediction;
-    const business = ml.data.business_metrics;
+    // Request ML prediction
+    const ML_API_URL = process.env.FLASK_ML_URL || "http://localhost:5000";
+    
+    try {
+      console.log(`🔮 Calling ML API: ${ML_API_URL}/api/predict/panen`);
+      
+      const ml = await axios.post(`${ML_API_URL}/api/predict/panen`, {
+        jumlah_telur_gram: Number(jumlahTelurSiklus),
+        makanan_gram: Number(jumlahMakananPembesaran)
+      });
 
-    const prediksiPanen = await prisma.prediksiPanen.create({
-      data: {
-        hasilGram: prediction.jumlah_panen_gram,
-        hasilKg: prediction.jumlah_panen_kg,
-        conversionRate: prediction.conversion_rate,
-        conversionLabel: prediction.conversion_label,
-        roiEstimate: business.roi_estimate,
-        estimatedValue: parseRupiah(business.estimated_value),
-        feedCost: parseRupiah(business.feed_cost),
-        faseId: fase.id
+      console.log(`✅ ML API Response:`, ml.data);
+
+      // Cek response structure
+      if (!ml.data || !ml.data.prediction) {
+        throw new Error("Invalid ML API response structure");
       }
-    });
 
-    // === NOTIFIKASI PREDIKSI BERHASIL ===
-    await createNotifikasi(
-      userId,
-      "Prediksi Panen Berhasil",
-      `Prediksi panen untuk siklus ${siklusId} berhasil dibuat.`,
-      "success"
-    );
+      const prediction = ml.data.prediction;
+      const business = ml.data.business_metrics;
 
-    res.json({ success: true, data: { fase, prediksiPanen } });
+      const prediksiPanen = await prisma.prediksiPanen.create({
+        data: {
+          hasilGram: prediction.jumlah_panen_gram,
+          hasilKg: prediction.jumlah_panen_kg,
+          conversionRate: prediction.conversion_rate,
+          conversionLabel: prediction.conversion_label,
+          roiEstimate: business.roi_estimate,
+          estimatedValue: parseRupiah(business.estimated_value),
+          feedCost: parseRupiah(business.feed_cost),
+          faseId: fase.id
+        }
+      });
+
+      console.log(`✅ Prediksi saved to DB: ID ${prediksiPanen.id}`);
+
+      // === NOTIFIKASI PREDIKSI BERHASIL ===
+      await createNotifikasi(
+        userId,
+        "Prediksi Panen Berhasil",
+        `Prediksi panen untuk siklus ${siklusId} berhasil dibuat.`,
+        "success"
+      );
+
+      res.json({ success: true, data: { fase, prediksiPanen } });
+    } catch (mlError) {
+      console.error("❌ ML API Error:", mlError.response?.data || mlError.message);
+      
+      // Notifikasi error
+      await createNotifikasi(
+        userId,
+        "Gagal Membuat Prediksi",
+        `Error: ${mlError.response?.data?.error || mlError.message}`,
+        "error"
+      );
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: "Gagal membuat prediksi panen", 
+        error: mlError.response?.data?.error || mlError.message 
+      });
+    }
   } catch (err) {
     console.error("tambahFase:", err);
     res.status(500).json({ success: false, message: "Internal server error" });

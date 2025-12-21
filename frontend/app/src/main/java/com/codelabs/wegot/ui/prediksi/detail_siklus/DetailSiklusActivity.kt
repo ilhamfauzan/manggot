@@ -2,6 +2,7 @@ package com.codelabs.wegot.ui.prediksi.detail_siklus
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,14 @@ class DetailSiklusActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         detailSiklusAdapter = DetailSiklusAdapter(
             onFaseClick = { faseItem ->
+                // ✅ DEBUG: Log untuk cek data
+                Log.d("DetailSiklus", "=== FASE CLICKED ===")
+                Log.d("DetailSiklus", "Jenis: ${faseItem.jenis}")
+                Log.d("DetailSiklus", "ID: ${faseItem.id}")
+                Log.d("DetailSiklus", "prediksiPanen: ${faseItem.prediksiPanen}")
+                Log.d("DetailSiklus", "prediksiPanen type: ${faseItem.prediksiPanen?.javaClass?.name}")
+                Log.d("DetailSiklus", "prediksiPanen is null? ${faseItem.prediksiPanen == null}")
+                
                 if (faseItem.jenis.uppercase() == "PANEN" && faseItem.prediksiPanen != null) {
                     val intent = Intent(this, HasilPrediksiActivity::class.java)
 
@@ -61,6 +70,7 @@ class DetailSiklusActivity : AppCompatActivity() {
                     intent.putExtra("HASIL_KG", hasilKg)
                     startActivity(intent)
                 } else {
+                    Log.e("DetailSiklus", "❌ PREDIKSI NULL - Showing toast")
                     Toast.makeText(this, "Data prediksi belum tersedia", Toast.LENGTH_SHORT).show()
                 }
             },
@@ -80,7 +90,27 @@ class DetailSiklusActivity : AppCompatActivity() {
                         startActivityForResult(intent, REQUEST_ADD_FASE)
                     }
                     "PANEN" -> {
-                        Toast.makeText(this, "Fase pembesaran harus diselesaikan terlebih dahulu", Toast.LENGTH_SHORT).show()
+                        // Cek apakah fase PEMBESARAN sudah ada
+                        val hasPembesaran = detailSiklusAdapter.getFaseList()
+                            .any { it.jenis.uppercase() == "PEMBESARAN" }
+                        
+                        if (hasPembesaran) {
+                            // Fase PEMBESARAN sudah ada, lanjut ke tambah PANEN
+                            val intent = Intent(this, TambahFaseActivity::class.java)
+                            val siklusId = this.intent.getIntExtra("EXTRA_ID", -1)
+                            val jumlahTelur = this.intent.getStringExtra("EXTRA_JUMLAH")?.toIntOrNull() ?: 0
+                            val mediaTelur = this.intent.getStringExtra("EXTRA_MEDIA") ?: ""
+
+                            intent.putExtra("SIKLUS_ID", siklusId)
+                            intent.putExtra("JENIS_FASE", "PANEN")
+                            intent.putExtra("JUMLAH_TELUR", jumlahTelur)
+                            intent.putExtra("MEDIA_TELUR", mediaTelur)
+                            intent.putExtra("MODE", "ADD")
+                            startActivityForResult(intent, REQUEST_ADD_FASE)
+                        } else {
+                            // Fase PEMBESARAN belum ada
+                            Toast.makeText(this, "Fase pembesaran harus diselesaikan terlebih dahulu", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }

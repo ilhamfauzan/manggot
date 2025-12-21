@@ -1,5 +1,5 @@
 import express from "express";
-import { createSiklus, getAllSiklus, getDetailSiklus, getPrediksiBySiklus } from "../controllers/siklusController.js";
+import { createSiklus, getAllSiklus, getDetailSiklus } from "../controllers/siklusController.js";
 import { authMiddleware } from "../authMiddleware.js";
 
 const router = express.Router();

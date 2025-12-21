@@ -25,13 +25,13 @@ object AppModule {
     }
 
     @Provides
-    fun provideChatbotApiService(): ChatbotApiService {
-        return ApiConfig.getChatbotApiService()
+    fun provideChatbotApiService(userPreferences: UserPreferences): ChatbotApiService {
+        return ApiConfig.getChatbotApiService(userPreferences)
     }
 
     @Provides
-    fun provideFlaskApiService(): FlaskApiService {
-        return ApiConfig.getFlaskApiService()
+    fun provideFlaskApiService(userPreferences: UserPreferences): FlaskApiService {
+        return ApiConfig.getFlaskApiService(userPreferences)
     }
 
     @Provides

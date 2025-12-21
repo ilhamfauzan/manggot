@@ -136,3 +136,16 @@ model Notifikasi {
   // Relasi ke User
   user      User        @relation(fields: [userId], references: [id])
 }
+
+// ================================
+// AI RECOMMENDATION CACHE
+// ================================
+model AIRecommendationCache {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  dataHash       String   // Hash of aggregated data to detect changes
+  recommendation String   @db.Text
+  createdAt      DateTime @default(now())
+
+  @@index([userId, dataHash])
+}

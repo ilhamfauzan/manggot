@@ -19,6 +19,63 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: .
+    container_name: maggot-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:magot123@postgres:5432/magot?schema=public
+      - PORT=5001
+      - JWT_SECRET=${JWT_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - FLASK_ML_URL=http://flask-ml:5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flask-ml:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  flask-ml:
+    build:
+      context: ../model
+      dockerfile: Dockerfile
+    container_name: maggot-flask-ml
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ../model/models:/app/models:ro
+      - ../model/api:/app/api:ro
+
+
+  prisma-studio:
+    image: node:18-alpine
+    container_name: maggot-studio
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://postgres:magot123@postgres:5432/magot?schema=public
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npx prisma studio --hostname 0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
     driver: local

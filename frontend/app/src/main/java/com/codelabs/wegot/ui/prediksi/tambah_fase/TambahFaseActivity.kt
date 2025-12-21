@@ -82,6 +82,7 @@ class TambahFaseActivity : AppCompatActivity() {
 
             val mode = intent.getStringExtra("MODE") ?: "ADD"
             val siklusId = intent.getIntExtra("SIKLUS_ID", -1)
+            val jumlahTelur = intent.getIntExtra("JUMLAH_TELUR", 100)  // Get from intent
 
             if (mode == "ADD" && siklusId != -1) {
                 try {
@@ -92,7 +93,8 @@ class TambahFaseActivity : AppCompatActivity() {
                         siklusId = siklusId,
                         tanggalPembesaran = tanggal,
                         jumlahMakanan = jumlah,
-                        catatan = catatan
+                        catatan = catatan,
+                        jumlahTelur = jumlahTelur  // ✅ Pass jumlahTelur
                     )
                 } catch (e: NumberFormatException) {
                     Toast.makeText(this, "Jumlah makanan harus berupa angka", Toast.LENGTH_SHORT).show()

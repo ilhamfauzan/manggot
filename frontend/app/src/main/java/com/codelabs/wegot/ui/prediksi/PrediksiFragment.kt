@@ -111,26 +111,57 @@ class PrediksiFragment : Fragment() {
         viewModel.siklusData.observe(viewLifecycleOwner) { response ->
             when (response) {
                 is ApiResponse.Empty -> {
-                    binding.rvPrediksiSiklus.visibility = View.VISIBLE
+                    showEmptyState(true)
                 }
                 is ApiResponse.Success -> {
-                    val loadingSiklusItems = response.data.data.map { dataItem ->
-                        SiklusItem(
-                            title = "Siklus ${dataItem.id}",
-                            label = "Prediksi Hasil Panen",
-                            result = "Memuat...",
-                            date = "Tanggal Mulai: ${formatDate(dataItem.tanggalMulai)}"
-                        )
+                    if (response.data.data.isEmpty()) {
+                        showEmptyState(true)
+                    } else {
+                        binding.rvPrediksiSiklus.visibility = View.VISIBLE
+                        binding.layoutEmptyState.root.visibility = View.GONE
+
+                        val loadingSiklusItems = response.data.data.map { dataItem ->
+                            SiklusItem(
+                                title = "Siklus ${dataItem.id}",
+                                label = "Prediksi Hasil Panen",
+                                result = "Memuat...",
+                                date = "Tanggal Mulai: ${formatDate(dataItem.tanggalMulai)}"
+                            )
+                        }
+
+                        siklusAdapter.setItems(loadingSiklusItems, response.data.data)
+                        loadAllHasilPanen(response.data.data)
                     }
-
-                    siklusAdapter.setItems(loadingSiklusItems, response.data.data)
-                    binding.rvPrediksiSiklus.visibility = View.VISIBLE
-
-                    loadAllHasilPanen(response.data.data)
                 }
                 is ApiResponse.Error -> {
                     Toast.makeText(requireContext(), response.errorMessage, Toast.LENGTH_SHORT).show()
-                    binding.rvPrediksiSiklus.visibility = View.VISIBLE
+                    showEmptyState(true, isError = true)
+                }
+            }
+        }
+    }
+
+    private fun showEmptyState(isEmpty: Boolean, isError: Boolean = false) {
+        if (isEmpty) {
+            binding.rvPrediksiSiklus.visibility = View.GONE
+            binding.layoutEmptyState.root.visibility = View.VISIBLE
+            
+            if (isError) {
+                binding.layoutEmptyState.tvEmptyTitle.text = "Gagal Memuat Data"
+                binding.layoutEmptyState.tvEmptyMessage.text = "Terjadi kesalahan saat memuat data. Silakan coba lagi."
+                binding.layoutEmptyState.btnEmptyAction.text = "Coba Lagi"
+                binding.layoutEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                binding.layoutEmptyState.btnEmptyAction.setOnClickListener {
+                    loadSiklusData()
+                }
+            } else {
+                binding.layoutEmptyState.tvEmptyTitle.text = "Belum Ada Siklus"
+                binding.layoutEmptyState.tvEmptyMessage.text = "Mulai budidaya maggot Anda dengan menambahkan siklus baru."
+                binding.layoutEmptyState.btnEmptyAction.text = "Tambah Siklus"
+                binding.layoutEmptyState.btnEmptyAction.visibility = View.VISIBLE
+                binding.layoutEmptyState.btnEmptyAction.setOnClickListener {
+                    val intent = Intent(requireContext(), TambahSiklusActivity::class.java)
+                    startActivityForResult(intent, REQUEST_ADD_SIKLUS)
                 }
             }
         }

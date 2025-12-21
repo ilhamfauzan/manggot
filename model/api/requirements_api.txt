@@ -1,0 +1,12 @@
+# Requirements untuk REST API Server
+Flask==3.0.0
+flask-cors==4.0.0
+scikit-learn==1.7.2
+numpy==2.2.2
+pandas==2.2.3
+joblib==1.3.2
+requests==2.31.0
+
+# Optional untuk production
+gunicorn==21.2.0
+waitress==3.0.0
