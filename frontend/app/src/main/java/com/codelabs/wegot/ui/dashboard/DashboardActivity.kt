@@ -62,10 +62,10 @@ class DashboardActivity : AppCompatActivity() {
                 val response = apiService.getDashboardSummary(currentTimeRange)
 
                 // Update metrics
-                binding.tvTotalPanen.text = "${response.totalYield} kg"
-                binding.tvSampahDiolah.text = "${response.totalWaste} kg"
-                binding.tvEfisiensi.text = "${String.format("%.1f", response.avgConversionRate)}%"
+                binding.tvTotalPanen.text = "${String.format("%.1f", response.totalYield)} kg"
+                binding.tvSampahDiolah.text = "${String.format("%.1f", response.totalWaste)} kg"
                 binding.tvSiklusAktif.text = "${response.activeCycles}"
+                binding.tvSiklusSelesai.text = "${response.completedCycles}"
 
                 // Update AI recommendation
                 binding.tvRekomendasi.text = response.aiRecommendation

@@ -9,11 +9,14 @@ data class DashboardResponse(
     @SerializedName("totalWaste")
     val totalWaste: Double,
 
+    @SerializedName("totalFeedInput")
+    val totalFeedInput: Double,
+
     @SerializedName("activeCycles")
     val activeCycles: Int,
 
-    @SerializedName("avgConversionRate")
-    val avgConversionRate: Double,
+    @SerializedName("completedCycles")
+    val completedCycles: Int,
 
     @SerializedName("yieldChart")
     val yieldChart: List<ChartItem>,

@@ -11,7 +11,7 @@ export const getDashboardSummary = async (req, res) => {
     // Calculate date filter based on timeRange
     let dateFilter = {};
     const now = new Date();
-    
+
     if (timeRange === '7d') {
       const sevenDaysAgo = new Date(now);
       sevenDaysAgo.setDate(now.getDate() - 7);
@@ -28,7 +28,7 @@ export const getDashboardSummary = async (req, res) => {
     // 'all' means no date filter
 
     // 1. Aggregation Logic with date filtering
-    
+
     // A. Yield & Efficiency (Filter by Harvest Date)
     const harvestFases = await prisma.fase.findMany({
       where: {
@@ -68,7 +68,7 @@ export const getDashboardSummary = async (req, res) => {
           jenis: 'PEMBESARAN'
         }
       });
-      
+
       return {
         label: `S${fase.siklus.id}`,
         yield: fase.prediksiPanen ? fase.prediksiPanen.hasilKg : 0,
@@ -86,10 +86,17 @@ export const getDashboardSummary = async (req, res) => {
     });
     const activeCycles = activeCyclesCount;
 
-    // avgConversionRate is already calculated above
+    // Count completed cycles (cycles that have PANEN phase)
+    const completedCycles = harvestFases.length;
+
+    // Calculate total feed input from all PEMBESARAN phases
+    let totalFeedInput = 0;
+    for (const item of efficiencyChart) {
+      totalFeedInput += item.feed;
+    }
 
     const wasteData = await prisma.pencacahan.aggregate({
-      where: { 
+      where: {
         userId: userId,
         ...(dateFilter.gte && { tanggalWaktu: dateFilter })
       },
@@ -98,7 +105,7 @@ export const getDashboardSummary = async (req, res) => {
     const totalWaste = wasteData._sum.totalSampah || 0;
 
     const recentWaste = await prisma.pencacahan.findMany({
-      where: { 
+      where: {
         userId: userId,
         ...(dateFilter.gte && { tanggalWaktu: dateFilter })
       },
@@ -106,88 +113,52 @@ export const getDashboardSummary = async (req, res) => {
       take: 7
     });
     const wasteChartData = recentWaste.map(w => ({
-        label: w.createdAt.toISOString().split('T')[0],
-        value: w.totalSampah
+      label: w.createdAt.toISOString().split('T')[0],
+      value: w.totalSampah
     })).reverse();
 
-    // 2. Check for cached AI recommendation (with time range in hash)
-    const dataHash = `${totalYield}-${totalWaste}-${avgConversionRate}-${activeCycles}-${timeRange}`;
-    let cachedRecommendation = await prisma.aIRecommendationCache.findFirst({
-      where: { 
-        userId: userId,
-        dataHash: dataHash
+    // 2. AI recommendation - DISABLED CACHE, always generate fresh
+    let aiRecommendation = "Memuat saran...";
+
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const prompt = `Data: Panen ${totalYield.toFixed(1)}kg, Sampah ${totalWaste.toFixed(1)}kg.
+
+Buat 3 baris saran PENDEK:
+📊 [hasil panen, sebutkan angka]
+⚠️ [1 masalah ATAU "Tidak ada masalah"]
+👉 [1 saran konkret]
+
+Maks 8 kata per baris. Bahasa sederhana.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let rawText = response.text();
+
+        // Clean markdown formatting
+        aiRecommendation = rawText
+          .replace(/\*\*/g, '')  // Remove bold
+          .replace(/\*/g, '')    // Remove italic
+          .replace(/#/g, '')     // Remove headers
+          .trim();
+
+        // No caching - always fresh recommendations
+
+      } catch (aiError) {
+        console.error("Gemini Error:", aiError);
+        aiRecommendation = "Sistem AI sedang sibuk, namun data Anda aman.";
       }
-    });
-
-    let aiRecommendation = "Data tidak cukup untuk analisis.";
-    
-    if (cachedRecommendation) {
-      // Use cached recommendation
-      aiRecommendation = cachedRecommendation.recommendation;
-      console.log("Using cached AI recommendation");
-    } else if (process.env.GEMINI_API_KEY) {
-        try {
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-            const timeContext = timeRange === 'all' ? 'sepanjang waktu' : 
-                               timeRange === '7d' ? '7 hari terakhir' :
-                               timeRange === '30d' ? '30 hari terakhir' : '90 hari terakhir';
-
-            const prompt = `
-              Analisis data budidaya maggot berikut (periode: ${timeContext}):
-              - Total Panen: ${totalYield.toFixed(2)} kg
-              - Total Sampah Diolah: ${totalWaste.toFixed(2)} kg
-              - Rata-rata Efisiensi Konversi: ${avgConversionRate.toFixed(2)}%
-              - Siklus Aktif: ${activeCycles}
-
-              Berikan ringkasan eksekutif dalam 3-4 kalimat. Fokus pada:
-              1. Evaluasi kinerja operasional periode ini
-              2. Insight penting dari angka efisiensi
-              3. Satu rekomendasi konkret untuk peningkatan bisnis
-              
-              Gunakan bahasa Indonesia profesional tapi tidak terlalu formal. 
-              JANGAN gunakan format markdown, sapaan formal (Bapak/Ibu/Manajer), atau istilah asing (BSF).
-              Langsung to the point.
-            `;
-
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            let rawText = response.text();
-            
-            // Clean markdown formatting
-            aiRecommendation = rawText
-              .replace(/\*\*/g, '')  // Remove bold
-              .replace(/\*/g, '')    // Remove italic
-              .replace(/#/g, '')     // Remove headers
-              .trim();
-
-            // Cache the recommendation
-            try {
-              await prisma.aIRecommendationCache.create({
-                data: {
-                  userId: userId,
-                  dataHash: dataHash,
-                  recommendation: aiRecommendation
-                }
-              });
-              console.log("AI recommendation cached successfully");
-            } catch (cacheError) {
-              console.error("Failed to cache AI recommendation:", cacheError);
-              // Don't fail the request if caching fails
-            }
-            
-        } catch (aiError) {
-            console.error("Gemini Error:", aiError);
-            aiRecommendation = "Sistem AI sedang sibuk, namun data Anda aman.";
-        }
     }
 
     res.json({
       totalYield,
       totalWaste,
+      totalFeedInput,
       activeCycles,
-      avgConversionRate,
+      completedCycles,
       yieldChart: chartData.slice(-7),
       wasteChart: wasteChartData,
       efficiencyChart: efficiencyChart,
